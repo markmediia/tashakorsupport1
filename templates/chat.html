@@ -20,10 +20,16 @@
             align-items: center;
         }
 
-        .chat-container {
+        .main-container {
             width: 90%;
-            max-width: 600px;
+            max-width: 1200px;
             height: 80vh;
+            display: flex;
+            gap: 20px;
+        }
+
+        .sidebar {
+            width: 300px;
             background: white;
             border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -32,13 +38,159 @@
             overflow: hidden;
         }
 
-        .chat-header {
+        .sidebar-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 20px;
+            font-size: 1.1em;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .sidebar-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .chat-history-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+            border-right: 3px solid transparent;
+        }
+
+        .chat-history-item:hover {
+            background: #e8e8e8;
+        }
+
+        .chat-history-item.active {
+            background: #e3f2fd;
+            border-right-color: #667eea;
+        }
+
+        .chat-history-item-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .chat-history-item-preview {
+            font-size: 0.8em;
+            color: #666;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .chat-history-item-date {
+            font-size: 0.7em;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        .sidebar-toggle {
+            display: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .chat-container {
+            flex: 1;
+            height: 80vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                width: 95%;
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 200px;
+                order: 2;
+            }
+
+            .chat-container {
+                order: 1;
+            }
+
+            .sidebar-toggle {
+                display: block;
+            }
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 20px;
             text-align: center;
             font-size: 1.2em;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+        }
+
+        .header-logo {
+            max-height: 40px;
+            max-width: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .header-icon {
+            max-height: 30px;
+            max-width: 30px;
+            object-fit: contain;
+        }
+
+        .upload-section {
+            position: absolute;
+            left: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .upload-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.7em;
+            transition: background 0.3s;
+        }
+
+        .upload-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .upload-input {
+            display: none;
         }
 
         .chat-messages {
@@ -134,9 +286,31 @@
     </style>
 </head>
 <body>
-    <div class="chat-container">
+    <div class="main-container">
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                📋 سابقه مکالمات
+            </div>
+            <div class="sidebar-content" id="sidebarContent">
+                <div class="chat-history-item active" data-session="current">
+                    <div class="chat-history-item-title">مکالمه فعلی</div>
+                    <div class="chat-history-item-preview">در حال گفتگو...</div>
+                    <div class="chat-history-item-date" id="currentChatDate"></div>
+                </div>
+            </div>
+        </div>
+        <div class="chat-container">
         <div class="chat-header">
-            🤖 پشتیبان برند تشکر
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <div class="upload-section">
+                <label for="logo-upload" class="upload-btn">📷 لوگو</label>
+                <input type="file" id="logo-upload" class="upload-input" accept="image/*">
+                <label for="icon-upload" class="upload-btn">🎨 آیکون</label>
+                <input type="file" id="icon-upload" class="upload-input" accept="image/*">
+            </div>
+            <img id="header-logo" class="header-logo" src="" alt="Logo" style="display: none;">
+            <img id="header-icon" class="header-icon" src="" alt="Icon" style="display: none;">
+            <span id="header-text">🤖 پشتیبان برند تشکر</span>
         </div>
         <div class="chat-messages" id="chatMessages">
             <div class="message bot">
@@ -153,8 +327,149 @@
             <button onclick="clearChat()" style="margin-right: 5px; padding: 12px 16px; background: #f44336;">پاک کردن</button>
         </div>
     </div>
+    </div>
 
     <script>
+        // مدیریت sidebar
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.style.display = sidebar.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        // مدیریت سابقه مکالمات
+        let chatHistory = JSON.parse(localStorage.getItem('chat_history') || '[]');
+        let currentSessionId = null;
+        let customerNumber = null;
+
+        function saveChatToHistory(sessionId, title, preview) {
+            // حذف اگر قبلاً وجود داشته باشد
+            chatHistory = chatHistory.filter(chat => chat.sessionId !== sessionId);
+            
+            // اضافه کردن به ابتدای لیست
+            chatHistory.unshift({
+                sessionId: sessionId,
+                title: title || 'مکالمه جدید',
+                preview: preview || '',
+                date: new Date().toISOString(),
+                messages: []
+            });
+            
+            // نگه داشتن فقط 50 مکالمه اخیر
+            if (chatHistory.length > 50) {
+                chatHistory = chatHistory.slice(0, 50);
+            }
+            
+            localStorage.setItem('chat_history', JSON.stringify(chatHistory));
+            renderChatHistory();
+        }
+
+        function updateCurrentChatPreview(message) {
+            const currentItem = document.querySelector('.chat-history-item.active');
+            if (currentItem) {
+                const preview = currentItem.querySelector('.chat-history-item-preview');
+                if (preview) {
+                    preview.textContent = message.length > 40 ? message.substring(0, 40) + '...' : message;
+                }
+            }
+        }
+
+        function renderChatHistory() {
+            const sidebarContent = document.getElementById('sidebarContent');
+            sidebarContent.innerHTML = '';
+            
+            // مکالمه فعلی
+            const currentItem = document.createElement('div');
+            currentItem.className = 'chat-history-item active';
+            currentItem.setAttribute('data-session', 'current');
+            currentItem.onclick = () => loadChatSession('current');
+            currentItem.innerHTML = `
+                <div class="chat-history-item-title">مکالمه فعلی</div>
+                <div class="chat-history-item-preview" id="currentChatPreview">در حال گفتگو...</div>
+                <div class="chat-history-item-date" id="currentChatDate">${new Date().toLocaleDateString('fa-IR')}</div>
+            `;
+            sidebarContent.appendChild(currentItem);
+            
+            // مکالمات قبلی
+            chatHistory.forEach((chat, index) => {
+                const item = document.createElement('div');
+                item.className = 'chat-history-item';
+                if (chat.sessionId === currentSessionId) {
+                    item.classList.add('active');
+                }
+                item.setAttribute('data-session', chat.sessionId);
+                item.onclick = () => loadChatSession(chat.sessionId);
+                
+                const date = new Date(chat.date);
+                item.innerHTML = `
+                    <div class="chat-history-item-title">${chat.title}</div>
+                    <div class="chat-history-item-preview">${chat.preview || 'بدون پیام'}</div>
+                    <div class="chat-history-item-date">${date.toLocaleDateString('fa-IR')} ${date.toLocaleTimeString('fa-IR', {hour: '2-digit', minute: '2-digit'})}</div>
+                `;
+                sidebarContent.appendChild(item);
+            });
+        }
+
+        function loadChatSession(selectedSessionId) {
+            if (selectedSessionId === 'current') {
+                // بازگشت به مکالمه فعلی
+                currentSessionId = 'current';
+                renderChatHistory();
+                // بارگذاری مجدد پیام‌های فعلی از سرور (اختیاری)
+                return;
+            }
+            
+            // پیدا کردن مکالمه در تاریخچه
+            const chat = chatHistory.find(c => c.sessionId === selectedSessionId);
+            if (!chat) return;
+            
+            // بارگذاری پیام‌های این مکالمه
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+            
+            chat.messages.forEach(msg => {
+                addMessage(msg.content, msg.role === 'user', false);
+            });
+            
+            // به‌روزرسانی session ID
+            currentSessionId = selectedSessionId;
+            sessionId = chat.sessionId;
+            localStorage.setItem('chatbot_session_id', sessionId);
+            
+            renderChatHistory();
+        }
+
+        // ذخیره پیام‌ها در تاریخچه
+        function saveMessageToHistory(message, isUser) {
+            if (!currentSessionId || currentSessionId === 'current') {
+                currentSessionId = sessionId;
+            }
+            
+            const chat = chatHistory.find(c => c.sessionId === currentSessionId);
+            if (chat) {
+                chat.messages.push({
+                    role: isUser ? 'user' : 'assistant',
+                    content: message,
+                    timestamp: new Date().toISOString()
+                });
+                
+                // به‌روزرسانی preview
+                if (isUser) {
+                    chat.preview = message.length > 40 ? message.substring(0, 40) + '...' : message;
+                }
+            } else {
+                // ایجاد مکالمه جدید
+                saveChatToHistory(currentSessionId, 'مکالمه جدید', isUser ? message : '');
+                const newChat = chatHistory[0];
+                newChat.messages = [{
+                    role: isUser ? 'user' : 'assistant',
+                    content: message,
+                    timestamp: new Date().toISOString()
+                }];
+            }
+            
+            localStorage.setItem('chat_history', JSON.stringify(chatHistory));
+            renderChatHistory();
+        }
         const chatMessages = document.getElementById('chatMessages');
         const userInput = document.getElementById('userInput');
         const typingIndicator = document.getElementById('typingIndicator');
@@ -166,7 +481,43 @@
             localStorage.setItem('chatbot_session_id', sessionId);
         }
 
-        function addMessage(text, isUser) {
+        // دریافت شماره مشتری برای session فعلی
+        async function getCustomerNumber() {
+            try {
+                const response = await fetch('/get-customer-number', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ session_id: sessionId })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    customerNumber = data.customer_number;
+                    // نمایش شماره مشتری در UI (اختیاری)
+                    updateCustomerNumberDisplay();
+                }
+            } catch (error) {
+                console.error('خطا در دریافت شماره مشتری:', error);
+            }
+        }
+
+        function updateCustomerNumberDisplay() {
+            // می‌توانید شماره مشتری را در header یا جای دیگری نمایش دهید
+            if (customerNumber) {
+                const headerText = document.getElementById('header-text');
+                if (headerText) {
+                    // نمایش شماره مشتری در کنار نام (اختیاری)
+                    // headerText.textContent = `🤖 پشتیبان برند تشکر - ${customerNumber}`;
+                }
+            }
+        }
+
+        // دریافت شماره مشتری در شروع
+        getCustomerNumber();
+
+        function addMessage(text, isUser, saveToHistory = true) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
             
@@ -180,6 +531,14 @@
             messageDiv.innerHTML = content;
             chatMessages.appendChild(messageDiv);
             chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // ذخیره در تاریخچه
+            if (saveToHistory) {
+                saveMessageToHistory(text, isUser);
+                if (isUser) {
+                    updateCurrentChatPreview(text);
+                }
+            }
         }
 
         function showTyping() {
@@ -221,6 +580,8 @@
                     if (data.session_id) {
                         sessionId = data.session_id;
                         localStorage.setItem('chatbot_session_id', sessionId);
+                        // دریافت شماره مشتری برای session جدید
+                        getCustomerNumber();
                     }
                 }
             } catch (error) {
@@ -254,6 +615,10 @@
                     // ایجاد session_id جدید
                     sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                     localStorage.setItem('chatbot_session_id', sessionId);
+                    currentSessionId = 'current';
+                    
+                    // به‌روزرسانی تاریخچه
+                    renderChatHistory();
                 } catch (error) {
                     console.error('Error clearing chat:', error);
                 }
@@ -265,6 +630,104 @@
                 sendMessage();
             }
         });
+
+        // بارگذاری لوگو و آیکون در شروع
+        async function loadLogoAndIcon() {
+            try {
+                const response = await fetch('/get-logo');
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.logo) {
+                        const logoImg = document.getElementById('header-logo');
+                        logoImg.src = data.logo;
+                        logoImg.style.display = 'block';
+                    }
+                    if (data.icon) {
+                        const iconImg = document.getElementById('header-icon');
+                        iconImg.src = data.icon;
+                        iconImg.style.display = 'block';
+                    }
+                }
+            } catch (error) {
+                console.error('خطا در بارگذاری لوگو:', error);
+            }
+        }
+
+        // آپلود لوگو
+        document.getElementById('logo-upload').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'logo');
+
+            try {
+                const response = await fetch('/upload-logo', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    const logoImg = document.getElementById('header-logo');
+                    logoImg.src = data.url;
+                    logoImg.style.display = 'block';
+                    alert('لوگو با موفقیت آپلود شد!');
+                } else {
+                    alert('خطا: ' + data.error);
+                }
+            } catch (error) {
+                alert('خطا در آپلود لوگو');
+                console.error(error);
+            }
+            
+            // پاک کردن input برای امکان آپلود مجدد همان فایل
+            e.target.value = '';
+        });
+
+        // آپلود آیکون
+        document.getElementById('icon-upload').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('type', 'icon');
+
+            try {
+                const response = await fetch('/upload-logo', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    const iconImg = document.getElementById('header-icon');
+                    iconImg.src = data.url;
+                    iconImg.style.display = 'block';
+                    alert('آیکون با موفقیت آپلود شد!');
+                } else {
+                    alert('خطا: ' + data.error);
+                }
+            } catch (error) {
+                alert('خطا در آپلود آیکون');
+                console.error(error);
+            }
+            
+            // پاک کردن input برای امکان آپلود مجدد همان فایل
+            e.target.value = '';
+        });
+
+        // بارگذاری لوگو و آیکون در شروع
+        loadLogoAndIcon();
+        
+        // بارگذاری تاریخچه در شروع
+        renderChatHistory();
+        
+        // به‌روزرسانی تاریخ مکالمه فعلی
+        document.getElementById('currentChatDate').textContent = new Date().toLocaleDateString('fa-IR');
     </script>
 </body>
 </html>

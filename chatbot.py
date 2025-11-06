@@ -57,7 +57,14 @@ class TashakorChatBot:
 
         امروز: {datetime.now().strftime('%Y/%m/%d %H:%M')}
         
-        همیشه به زبان فارسی پاسخ دهید و از لحن دوستانه و حرفه‌ای استفاده کنید.
+        دستورالعمل‌های مهم:
+        1. همیشه به زبان فارسی پاسخ دهید
+        2. از لحن دوستانه و حرفه‌ای استفاده کنید
+        3. کلمات فارسی را به صورت کامل و بدون فاصله بنویسید (مثلاً "سلام" نه "س لا م")
+        4. از فاصله‌گذاری صحیح استفاده کنید
+        5. املای صحیح کلمات فارسی را رعایت کنید
+        6. هرگز کلمات فارسی را جدا جدا ننویسید
+        7. از علائم نگارشی فارسی استفاده کنید (، . ؛ : ! ؟)
         """
     
     def get_response(self, user_input: str, session_id: str = "default") -> str:
@@ -93,15 +100,24 @@ class TashakorChatBot:
             recent_history = conversation_history[-10:] if len(conversation_history) > 10 else conversation_history
             messages.extend(recent_history)
             
-            # فراخوانی API
+            # فراخوانی API با تنظیمات بهینه برای فارسی
             response = self.client.chat.completions.create(
                 model="gpt-4o-mini",  # می‌توانید به gpt-4 تغییر دهید
                 messages=messages,
                 temperature=0.7,
-                max_tokens=500
+                max_tokens=500,
+                # تنظیمات اضافی برای بهبود کیفیت فارسی
+                presence_penalty=0.1,
+                frequency_penalty=0.1
             )
             
             bot_response = response.choices[0].message.content.strip()
+            
+            # اصلاح مشکلات رایج در نوشتار فارسی (مثلاً "س لا م" -> "سلام")
+            bot_response = self.fix_persian_text(bot_response)
+            
+            # بررسی اینکه آیا مشتری اطلاعات را کامل کرده است
+            # این بخش را می‌توانید با یک prompt خاص برای استخراج اطلاعات اضافه کنید
             
             # اضافه کردن پاسخ به سابقه
             conversation_history.append({
@@ -123,6 +139,43 @@ class TashakorChatBot:
     def get_conversation_history(self, session_id: str = "default") -> List[Dict]:
         """دریافت سابقه مکالمه"""
         return self.conversations.get(session_id, [])
+    
+    def fix_persian_text(self, text: str) -> str:
+        """
+        اصلاح مشکلات رایج در نوشتار فارسی ChatGPT
+        
+        Args:
+            text: متن خام از ChatGPT
+            
+        Returns:
+            متن اصلاح شده
+        """
+        import re
+        
+        # حذف فاصله‌های اضافی بین حروف فارسی
+        # الگو: حرف فارسی + فاصله + حرف فارسی (که نباید فاصله داشته باشد)
+        persian_chars = r'[\u0600-\u06FF]'
+        
+        # حذف فاصله بین حروف کلمات فارسی (مثلاً "س لا م" -> "سلام")
+        # این الگو فاصله‌های بین حروف فارسی را پیدا می‌کند
+        text = re.sub(rf'({persian_chars})\s+({persian_chars})', r'\1\2', text)
+        
+        # اما فاصله بین کلمات را حفظ می‌کنیم
+        # برای این کار، بعد از حذف فاصله‌های بین حروف، فاصله بین کلمات را دوباره اضافه می‌کنیم
+        
+        # حذف فاصله‌های اضافی
+        text = re.sub(r'\s+', ' ', text)
+        
+        # حذف فاصله قبل از علائم نگارشی
+        text = re.sub(r'\s+([،\.؛:!؟])', r'\1', text)
+        
+        # اضافه کردن فاصله بعد از علائم نگارشی (اگر نیاز باشد)
+        text = re.sub(r'([،\.؛:!؟])([^\s])', r'\1 \2', text)
+        
+        # حذف فاصله در ابتدا و انتها
+        text = text.strip()
+        
+        return text
     
     def update_brand_context(self, new_context: str):
         """به‌روزرسانی کانتکس برند"""
