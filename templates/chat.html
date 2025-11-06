@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>چت بات</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 600px;
+            height: 80vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f5f5f5;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #333;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-sender {
+            font-size: 0.8em;
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 15px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input input:focus {
+            border-color: #667eea;
+        }
+
+        .chat-input button {
+            margin-right: 10px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s;
+        }
+
+        .chat-input button:hover {
+            transform: scale(1.05);
+        }
+
+        .chat-input button:active {
+            transform: scale(0.95);
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            🤖 پشتیبان برند تشکر
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div>
+                    <div class="message-sender">پشتیبان برند تشکر</div>
+                    <div class="message-content">سلام! به برند تشکر خوش اومدید. چطور می‌تونم کمکتون کنم؟</div>
+                </div>
+            </div>
+        </div>
+        <div class="typing-indicator" id="typingIndicator">در حال تایپ...</div>
+        <div class="chat-input">
+            <input type="text" id="userInput" placeholder="پیام خود را بنویسید..." autocomplete="off">
+            <button onclick="sendMessage()">ارسال</button>
+            <button onclick="clearChat()" style="margin-right: 5px; padding: 12px 16px; background: #f44336;">پاک کردن</button>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const typingIndicator = document.getElementById('typingIndicator');
+        
+        // ایجاد session_id برای حفظ سابقه مکالمه
+        let sessionId = localStorage.getItem('chatbot_session_id');
+        if (!sessionId) {
+            sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('chatbot_session_id', sessionId);
+        }
+
+        function addMessage(text, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            
+            const content = `
+                <div>
+                    <div class="message-sender">${isUser ? 'شما' : 'پشتیبان برند تشکر'}</div>
+                    <div class="message-content">${text}</div>
+                </div>
+            `;
+            
+            messageDiv.innerHTML = content;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTyping() {
+            typingIndicator.style.display = 'block';
+        }
+
+        function hideTyping() {
+            typingIndicator.style.display = 'none';
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            userInput.value = '';
+            showTyping();
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        message: message,
+                        session_id: sessionId
+                    })
+                });
+
+                const data = await response.json();
+                hideTyping();
+                
+                if (data.error) {
+                    addMessage('خطا: ' + data.error, false);
+                } else {
+                    addMessage(data.response, false);
+                    // به‌روزرسانی session_id در صورت نیاز
+                    if (data.session_id) {
+                        sessionId = data.session_id;
+                        localStorage.setItem('chatbot_session_id', sessionId);
+                    }
+                }
+            } catch (error) {
+                hideTyping();
+                addMessage('متأسفانه خطایی رخ داد. لطفا دوباره تلاش کنید.', false);
+                console.error('Error:', error);
+            }
+        }
+
+        async function clearChat() {
+            if (confirm('آیا مطمئن هستید که می‌خواهید سابقه مکالمه را پاک کنید؟')) {
+                try {
+                    await fetch('/clear', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ session_id: sessionId })
+                    });
+                    
+                    // پاک کردن پیام‌ها از صفحه
+                    chatMessages.innerHTML = `
+                        <div class="message bot">
+                            <div>
+                                <div class="message-sender">پشتیبان برند تشکر</div>
+                                <div class="message-content">سلام! به برند تشکر خوش اومدید. چطور می‌تونم کمکتون کنم؟</div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // ایجاد session_id جدید
+                    sessionId = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('chatbot_session_id', sessionId);
+                } catch (error) {
+                    console.error('Error clearing chat:', error);
+                }
+            }
+        }
+
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
+

@@ -1,153 +1,294 @@
-# LLM Chat Application Template
+# چت بات پشتیبان و فروشنده برند تشکر 🤖
 
-A simple, ready-to-deploy chat application template powered by Cloudflare Workers AI. This template provides a clean starting point for building AI chat applications with streaming responses.
+یک چت بات هوشمند با استفاده از OpenAI GPT API برای پشتیبانی و فروش محصولات برند تشکر
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/llm-chat-app-template)
+## ✨ ویژگی‌ها
 
-<!-- dash-content-start -->
+- ✅ استفاده از OpenAI GPT API (ChatGPT)
+- ✅ کانتکس اختصاصی برند تشکر
+- ✅ حافظه مکالمه (سابقه گفتگو برای هر کاربر)
+- ✅ رابط کاربری زیبا و واکنش‌گرا
+- ✅ پشتیبانی کامل از زبان فارسی
+- ✅ آماده برای استقرار در دامنه عمومی
+- ✅ پشتیبانی از Docker
+- ✅ API RESTful برای یکپارچه‌سازی
 
-## Demo
+## 🚀 نصب و راه‌اندازی
 
-This template demonstrates how to build an AI-powered chat interface using Cloudflare Workers AI with streaming responses. It features:
+### پیش‌نیازها
 
-- Real-time streaming of AI responses using Server-Sent Events (SSE)
-- Easy customization of models and system prompts
-- Support for AI Gateway integration
-- Clean, responsive UI that works on mobile and desktop
+- Python 3.11 یا بالاتر
+- OpenAI API Key (از [OpenAI Platform](https://platform.openai.com/api-keys) دریافت کنید)
 
-## Features
+### نصب محلی
 
-- 💬 Simple and responsive chat interface
-- ⚡ Server-Sent Events (SSE) for streaming responses
-- 🧠 Powered by Cloudflare Workers AI LLMs
-- 🛠️ Built with TypeScript and Cloudflare Workers
-- 📱 Mobile-friendly design
-- 🔄 Maintains chat history on the client
-- 🔎 Built-in Observability logging
-<!-- dash-content-end -->
-
-## Getting Started
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v18 or newer)
-- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/)
-- A Cloudflare account with Workers AI access
-
-### Installation
-
-1. Clone this repository:
-
-   ```bash
-   git clone https://github.com/cloudflare/templates.git
-   cd templates/llm-chat-app
-   ```
-
-2. Install dependencies:
-
-   ```bash
-   npm install
-   ```
-
-3. Generate Worker type definitions:
-   ```bash
-   npm run cf-typegen
-   ```
-
-### Development
-
-Start a local development server:
+1. **کلون کردن یا دانلود پروژه**
 
 ```bash
-npm run dev
+cd chatbot_project
 ```
 
-This will start a local server at http://localhost:8787.
-
-Note: Using Workers AI accesses your Cloudflare account even during local development, which will incur usage charges.
-
-### Deployment
-
-Deploy to Cloudflare Workers:
+2. **نصب وابستگی‌ها**
 
 ```bash
-npm run deploy
+pip install -r requirements.txt
 ```
 
-### Monitor
+3. **تنظیم متغیرهای محیطی**
 
-View real-time logs associated with any deployed Worker:
+فایل `.env` را از `.env.example` کپی کنید:
 
 ```bash
-npm wrangler tail
+cp .env.example .env
 ```
 
-## Project Structure
+سپس فایل `.env` را ویرایش کرده و API key خود را وارد کنید:
 
-```
-/
-├── public/             # Static assets
-│   ├── index.html      # Chat UI HTML
-│   └── chat.js         # Chat UI frontend script
-├── src/
-│   ├── index.ts        # Main Worker entry point
-│   └── types.ts        # TypeScript type definitions
-├── test/               # Test files
-├── wrangler.jsonc      # Cloudflare Worker configuration
-├── tsconfig.json       # TypeScript configuration
-└── README.md           # This documentation
+```env
+OPENAI_API_KEY=sk-your-api-key-here
+SECRET_KEY=your-secret-key-here
+PORT=5000
+FLASK_ENV=development
 ```
 
-## How It Works
+4. **اجرای برنامه**
 
-### Backend
+```bash
+python chatbot_web.py
+```
 
-The backend is built with Cloudflare Workers and uses the Workers AI platform to generate responses. The main components are:
+سپس به آدرس `http://localhost:5000` بروید.
 
-1. **API Endpoint** (`/api/chat`): Accepts POST requests with chat messages and streams responses
-2. **Streaming**: Uses Server-Sent Events (SSE) for real-time streaming of AI responses
-3. **Workers AI Binding**: Connects to Cloudflare's AI service via the Workers AI binding
+## 📖 استفاده
 
-### Frontend
+### نسخه کنسولی
 
-The frontend is a simple HTML/CSS/JavaScript application that:
+```bash
+python chatbot.py
+```
 
-1. Presents a chat interface
-2. Sends user messages to the API
-3. Processes streaming responses in real-time
-4. Maintains chat history on the client side
+### نسخه وب
 
-## Customization
+```bash
+python chatbot_web.py
+```
 
-### Changing the Model
+بعد از اجرا، مرورگر را باز کرده و به `http://localhost:5000` بروید.
 
-To use a different AI model, update the `MODEL_ID` constant in `src/index.ts`. You can find available models in the [Cloudflare Workers AI documentation](https://developers.cloudflare.com/workers-ai/models/).
+## 🌐 استقرار در دامنه عمومی
 
-### Using AI Gateway
+### روش 1: استفاده از Render (رایگان)
 
-The template includes commented code for AI Gateway integration, which provides additional capabilities like rate limiting, caching, and analytics.
+1. پروژه را در GitHub آپلود کنید
+2. به [Render](https://render.com) بروید و حساب کاربری بسازید
+3. New Web Service را انتخاب کنید
+4. Repository را متصل کنید
+5. تنظیمات:
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn --bind 0.0.0.0:$PORT chatbot_web:app`
+   - **Environment Variables**:
+     - `OPENAI_API_KEY`: API key شما
+     - `SECRET_KEY`: یک کلید امنیتی تصادفی
+     - `PORT`: 5000 (یا هر پورتی که Render تعیین می‌کند)
 
-To enable AI Gateway:
+### روش 2: استفاده از Railway
 
-1. [Create an AI Gateway](https://dash.cloudflare.com/?to=/:account/ai/ai-gateway) in your Cloudflare dashboard
-2. Uncomment the gateway configuration in `src/index.ts`
-3. Replace `YOUR_GATEWAY_ID` with your actual AI Gateway ID
-4. Configure other gateway options as needed:
-   - `skipCache`: Set to `true` to bypass gateway caching
-   - `cacheTtl`: Set the cache time-to-live in seconds
+1. به [Railway](https://railway.app) بروید
+2. New Project → Deploy from GitHub
+3. Repository را انتخاب کنید
+4. Environment Variables را تنظیم کنید:
+   - `OPENAI_API_KEY`
+   - `SECRET_KEY`
+5. Railway به صورت خودکار استقرار می‌کند
 
-Learn more about [AI Gateway](https://developers.cloudflare.com/ai-gateway/).
+### روش 3: استفاده از Docker
 
-### Modifying the System Prompt
+1. **ساخت تصویر Docker**
 
-The default system prompt can be changed by updating the `SYSTEM_PROMPT` constant in `src/index.ts`.
+```bash
+docker build -t tashakor-chatbot .
+```
 
-### Styling
+2. **اجرای کانتینر**
 
-The UI styling is contained in the `<style>` section of `public/index.html`. You can modify the CSS variables at the top to quickly change the color scheme.
+```bash
+docker run -p 5000:5000 \
+  -e OPENAI_API_KEY=your-api-key \
+  -e SECRET_KEY=your-secret-key \
+  tashakor-chatbot
+```
 
-## Resources
+3. **استفاده از Docker Compose**
 
-- [Cloudflare Workers Documentation](https://developers.cloudflare.com/workers/)
-- [Cloudflare Workers AI Documentation](https://developers.cloudflare.com/workers-ai/)
-- [Workers AI Models](https://developers.cloudflare.com/workers-ai/models/)
+```bash
+# تنظیم .env فایل
+cp .env.example .env
+# ویرایش .env و وارد کردن API key
+
+# اجرا
+docker-compose up -d
+```
+
+### روش 4: استقرار در سرور VPS
+
+1. **نصب وابستگی‌ها در سرور**
+
+```bash
+sudo apt update
+sudo apt install python3-pip nginx
+pip3 install -r requirements.txt
+```
+
+2. **اجرای با Gunicorn**
+
+```bash
+gunicorn --bind 0.0.0.0:5000 --workers 4 chatbot_web:app
+```
+
+3. **تنظیم Nginx (اختیاری)**
+
+فایل `/etc/nginx/sites-available/chatbot` ایجاد کنید:
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+4. **فعال‌سازی سایت**
+
+```bash
+sudo ln -s /etc/nginx/sites-available/chatbot /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+## 🔧 پیکربندی
+
+### سفارشی‌سازی کانتکس برند
+
+فایل `chatbot.py` را باز کرده و متغیر `brand_context` را ویرایش کنید:
+
+```python
+self.brand_context = """
+شما یک پشتیبان و فروشنده حرفه‌ای برای برند "تشکر" هستید.
+[اطلاعات برند خود را اینجا وارد کنید]
+"""
+```
+
+### تنظیمات مدل ChatGPT
+
+در فایل `chatbot.py` می‌توانید مدل را تغییر دهید:
+
+```python
+response = self.client.chat.completions.create(
+    model="gpt-4o-mini",  # یا "gpt-4" برای دقت بیشتر
+    ...
+)
+```
+
+## 📡 API Endpoints
+
+### POST `/chat`
+
+ارسال پیام به چت بات
+
+**Request:**
+```json
+{
+  "message": "سلام",
+  "session_id": "optional-session-id"
+}
+```
+
+**Response:**
+```json
+{
+  "response": "سلام! چطور می‌تونم کمکتون کنم؟",
+  "bot_name": "پشتیبان برند تشکر",
+  "session_id": "session-id"
+}
+```
+
+### POST `/clear`
+
+پاک کردن سابقه مکالمه
+
+**Request:**
+```json
+{
+  "session_id": "session-id"
+}
+```
+
+**Response:**
+```json
+{
+  "message": "سابقه مکالمه پاک شد",
+  "session_id": "session-id"
+}
+```
+
+### GET `/health`
+
+بررسی وضعیت سرویس
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "bot_available": true
+}
+```
+
+## 🎨 سفارشی‌سازی رابط کاربری
+
+فایل `templates/chat.html` را ویرایش کنید تا ظاهر و رنگ‌بندی را تغییر دهید.
+
+## 🔒 امنیت
+
+- **Production**: حتماً `SECRET_KEY` را تغییر دهید
+- **API Key**: هرگز API key را در کد قرار ندهید، از متغیرهای محیطی استفاده کنید
+- **HTTPS**: برای استقرار عمومی از HTTPS استفاده کنید (Let's Encrypt رایگان است)
+
+## 📝 یادداشت‌ها
+
+- حافظه مکالمه در حافظه سرور ذخیره می‌شود (در صورت restart از بین می‌رود)
+- برای ذخیره دائمی، می‌توانید از دیتابیس (مثل PostgreSQL یا MongoDB) استفاده کنید
+- هزینه استفاده از OpenAI API بر اساس تعداد توکن‌های استفاده شده محاسبه می‌شود
+
+## 🐛 عیب‌یابی
+
+### خطای "OpenAI API key is required"
+
+- مطمئن شوید فایل `.env` ایجاد شده و `OPENAI_API_KEY` در آن تنظیم شده است
+- یا متغیر محیطی را به صورت دستی تنظیم کنید: `export OPENAI_API_KEY=your-key`
+
+### خطای اتصال به API
+
+- اتصال اینترنت را بررسی کنید
+- API key را بررسی کنید
+- از داشتن اعتبار کافی در حساب OpenAI اطمینان حاصل کنید
+
+## 📄 مجوز
+
+این پروژه برای استفاده آزاد است.
+
+## 🤝 مشارکت
+
+برای بهبود پروژه، Pull Request ارسال کنید یا Issue ایجاد کنید.
+
+## 📞 پشتیبانی
+
+برای سوالات و مشکلات، Issue در GitHub ایجاد کنید.
+
+---
+
+**ساخته شده با ❤️ برای برند تشکر**
