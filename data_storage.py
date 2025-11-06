@@ -6,9 +6,21 @@ import os
 import json
 from datetime import datetime
 from typing import Dict, Optional
-import pandas as pd
-from openpyxl import Workbook, load_workbook
-from openpyxl.styles import Font, PatternFill, Alignment
+
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
+    print("⚠️  pandas نصب نشده است. از روش جایگزین استفاده می‌شود.")
+
+try:
+    from openpyxl import Workbook, load_workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+    OPENPYXL_AVAILABLE = True
+except ImportError:
+    OPENPYXL_AVAILABLE = False
+    print("⚠️  openpyxl نصب نشده است.")
 
 class CustomerDataStorage:
     """کلاس برای ذخیره اطلاعات مشتریان"""
@@ -28,25 +40,48 @@ class CustomerDataStorage:
     def ensure_excel_file(self):
         """ایجاد فایل Excel در صورت عدم وجود"""
         if not os.path.exists(self.excel_file):
-            df = pd.DataFrame(columns=[
-                'شماره مشتری',
-                'تاریخ و زمان',
-                'نام و نام خانوادگی',
-                'شماره تماس',
-                'ایمیل',
-                'آدرس',
-                'محصول مورد نظر',
-                'تعداد',
-                'قیمت',
-                'وضعیت',
-                'یادداشت',
-                'Session ID'
-            ])
-            df.to_excel(self.excel_file, index=False, engine='openpyxl')
+            if PANDAS_AVAILABLE:
+                df = pd.DataFrame(columns=[
+                    'شماره مشتری',
+                    'تاریخ و زمان',
+                    'نام و نام خانوادگی',
+                    'شماره تماس',
+                    'ایمیل',
+                    'آدرس',
+                    'محصول مورد نظر',
+                    'تعداد',
+                    'قیمت',
+                    'وضعیت',
+                    'یادداشت',
+                    'Session ID'
+                ])
+                df.to_excel(self.excel_file, index=False, engine='openpyxl')
+            else:
+                # روش جایگزین بدون pandas
+                wb = Workbook()
+                ws = wb.active
+                ws.append([
+                    'شماره مشتری',
+                    'تاریخ و زمان',
+                    'نام و نام خانوادگی',
+                    'شماره تماس',
+                    'ایمیل',
+                    'آدرس',
+                    'محصول مورد نظر',
+                    'تعداد',
+                    'قیمت',
+                    'وضعیت',
+                    'یادداشت',
+                    'Session ID'
+                ])
+                wb.save(self.excel_file)
             self.format_excel_file()
     
     def format_excel_file(self):
         """فرمت‌دهی فایل Excel"""
+        if not OPENPYXL_AVAILABLE:
+            return
+            
         try:
             wb = load_workbook(self.excel_file)
             ws = wb.active
@@ -94,10 +129,6 @@ class CustomerDataStorage:
             True در صورت موفقیت
         """
         try:
-            # خواندن فایل موجود
-            df = pd.read_excel(self.excel_file, engine='openpyxl')
-            
-            # اضافه کردن ردیف جدید
             new_row = {
                 'شماره مشتری': customer_data.get('customer_number', ''),
                 'تاریخ و زمان': datetime.now().strftime('%Y/%m/%d %H:%M:%S'),
@@ -113,10 +144,31 @@ class CustomerDataStorage:
                 'Session ID': customer_data.get('session_id', '')
             }
             
-            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+            if PANDAS_AVAILABLE:
+                # استفاده از pandas
+                df = pd.read_excel(self.excel_file, engine='openpyxl')
+                df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+                df.to_excel(self.excel_file, index=False, engine='openpyxl')
+            else:
+                # روش جایگزین بدون pandas
+                wb = load_workbook(self.excel_file)
+                ws = wb.active
+                ws.append([
+                    new_row['شماره مشتری'],
+                    new_row['تاریخ و زمان'],
+                    new_row['نام و نام خانوادگی'],
+                    new_row['شماره تماس'],
+                    new_row['ایمیل'],
+                    new_row['آدرس'],
+                    new_row['محصول مورد نظر'],
+                    new_row['تعداد'],
+                    new_row['قیمت'],
+                    new_row['وضعیت'],
+                    new_row['یادداشت'],
+                    new_row['Session ID']
+                ])
+                wb.save(self.excel_file)
             
-            # ذخیره در Excel
-            df.to_excel(self.excel_file, index=False, engine='openpyxl')
             self.format_excel_file()
             
             # ذخیره در Google Sheets (اگر تنظیم شده باشد)
@@ -172,11 +224,22 @@ class CustomerDataStorage:
         except Exception as e:
             print(f"⚠️  خطا در ذخیره در Google Sheets: {e}")
     
-    def get_all_customers(self) -> pd.DataFrame:
+    def get_all_customers(self):
         """دریافت تمام اطلاعات مشتریان"""
         try:
-            return pd.read_excel(self.excel_file, engine='openpyxl')
+            if PANDAS_AVAILABLE:
+                return pd.read_excel(self.excel_file, engine='openpyxl')
+            else:
+                # روش جایگزین
+                wb = load_workbook(self.excel_file)
+                ws = wb.active
+                data = []
+                for row in ws.iter_rows(values_only=True):
+                    data.append(row)
+                return data
         except Exception as e:
             print(f"خطا در خواندن فایل: {e}")
-            return pd.DataFrame()
+            if PANDAS_AVAILABLE:
+                return pd.DataFrame()
+            return []
 
