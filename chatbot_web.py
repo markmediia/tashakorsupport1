@@ -19,18 +19,26 @@ app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-change-this-in-product
 # فعال‌سازی CORS برای دسترسی از دامنه‌های مختلف
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-# Initialize chatbot
-try:
-    bot = TashakorChatBot()
-except ValueError as e:
-    print(f"خطا در راه‌اندازی چت بات: {e}")
-    bot = None
+# Initialize chatbot (lazy initialization)
+bot = None
+
+def get_bot():
+    """Lazy initialization of chatbot"""
+    global bot
+    if bot is None:
+        try:
+            bot = TashakorChatBot()
+        except Exception as e:
+            print(f"خطا در راه‌اندازی چت بات: {e}")
+            return None
+    return bot
 
 def require_bot(f):
     """دکوراتور برای بررسی وجود bot"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if bot is None:
+        current_bot = get_bot()
+        if current_bot is None:
             return jsonify({'error': 'چت بات در دسترس نیست. لطفا API key را تنظیم کنید.'}), 503
         return f(*args, **kwargs)
     return decorated_function
@@ -60,11 +68,15 @@ def chat():
         session_id = str(uuid.uuid4())
     
     try:
-        response = bot.get_response(user_message, session_id)
+        current_bot = get_bot()
+        if current_bot is None:
+            return jsonify({'error': 'چت بات در دسترس نیست'}), 503
+            
+        response = current_bot.get_response(user_message, session_id)
         
         return jsonify({
             'response': response,
-            'bot_name': bot.name,
+            'bot_name': current_bot.name,
             'session_id': session_id
         })
     except Exception as e:
@@ -79,7 +91,9 @@ def clear_chat():
     data = request.json or {}
     session_id = data.get('session_id', 'default')
     
-    bot.clear_conversation(session_id)
+    current_bot = get_bot()
+    if current_bot:
+        current_bot.clear_conversation(session_id)
     
     return jsonify({
         'message': 'سابقه مکالمه پاک شد',
@@ -89,16 +103,18 @@ def clear_chat():
 @app.route('/health', methods=['GET'])
 def health():
     """بررسی وضعیت سرویس"""
+    current_bot = get_bot()
     return jsonify({
-        'status': 'healthy' if bot else 'unhealthy',
-        'bot_available': bot is not None
+        'status': 'healthy' if current_bot else 'unhealthy',
+        'bot_available': current_bot is not None
     })
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))
     debug = os.getenv('FLASK_ENV') == 'development'
     
-    if bot:
+    current_bot = get_bot()
+    if current_bot:
         print(f"🚀 چت بات برند تشکر در حال اجرا است...")
         print(f"📡 پورت: {port}")
         print(f"🌐 آدرس: http://localhost:{port}")
