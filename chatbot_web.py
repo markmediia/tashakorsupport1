@@ -10,8 +10,14 @@ from chatbot import TashakorChatBot
 from functools import wraps
 from dotenv import load_dotenv
 
-# بارگذاری متغیرهای محیطی
-load_dotenv()
+# بارگذاری متغیرهای محیطی (فقط در محیط محلی، در Render از Environment Variables استفاده می‌شود)
+# در Render، Environment Variables اولویت دارند
+if os.getenv('RENDER') or os.getenv('DYNO'):  # Render یا Heroku
+    # در production، از Environment Variables استفاده می‌کنیم
+    pass
+else:
+    # در محیط محلی، از فایل .env استفاده می‌کنیم
+    load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-change-this-in-production')

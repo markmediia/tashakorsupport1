@@ -22,6 +22,10 @@ class TashakorChatBot:
         if not self.api_key:
             raise ValueError("OpenAI API key is required. Set OPENAI_API_KEY environment variable or pass api_key parameter.")
         
+        # بررسی صحت API key (شروع با sk-)
+        if not self.api_key.startswith('sk-'):
+            raise ValueError(f"Invalid API key format. API key should start with 'sk-'. Current key starts with: {self.api_key[:10]}...")
+        
         self.client = OpenAI(api_key=self.api_key)
         
         # کانتکس برند تشکر
