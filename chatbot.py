@@ -116,7 +116,7 @@ class TashakorChatBot:
             bot_response = response.choices[0].message.content.strip()
             
             # اصلاح مشکلات رایج در نوشتار فارسی (مثلاً "س لا م" -> "سلام")
-            bot_response = self.fix_persian_text(bot_response)
+            # bot_response = self.fix_persian_text(bot_response)
             
             # بررسی اینکه آیا مشتری اطلاعات را کامل کرده است
             # این بخش را می‌توانید با یک prompt خاص برای استخراج اطلاعات اضافه کنید
